@@ -1,3 +1,3 @@
-from secrets import API_KEY
+from local_secrets import API_KEY
 
 print(API_KEY)
