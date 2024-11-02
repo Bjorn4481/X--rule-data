@@ -72,21 +72,21 @@ def get_all_events_teams_performance_data():
                     else:
                         state_prov = None
         teams_performance_data = get_team_performance_data(event_key, week, state_prov)
-        with open("all_teams_performance_data.csv", "a") as f:
+        with open("all_teams_performance_data.csv", "a", encoding='utf-8') as f:
             for team_data in teams_performance_data:
                 f.write(",".join(str(value) for value in team_data.values()) + "\n")
         print(f"Saved {event_key}")
 
 def save_events_to_file(events_data):
-    with open("events_file.json", "w") as f:
+    with open("events_file.json", "w", encoding='utf-8') as f:
         json.dump(events_data, f)
 
 def save_event_keys_to_file():
-    with open("events_file.json", "r") as f:
+    with open("events_file.json", "r", encoding='utf-8') as f:
         # Make a list of all the event keys
         events_data = json.load(f)
         event_keys = [event["key"] for event in events_data]
-    with open("event_keys.json", "w") as f:
+    with open("event_keys.json", "w", encoding='utf-8') as f:
         json.dump(event_keys, f)
 
 def get_all_teams_data():
@@ -103,7 +103,7 @@ def get_all_teams_data():
     return teams_data
 
 def save_all_teams_data_to_file(teams_data):
-    with open("teams_file.json", "w") as f:
+    with open("teams_file.json", "w", encoding='utf-8') as f:
         json.dump(teams_data, f)
 
 # Save events to json file
