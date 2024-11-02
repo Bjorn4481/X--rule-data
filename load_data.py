@@ -20,7 +20,11 @@ def get_events(years):
 def get_oprs(event_key):
     url = f"{BASE_URL}/event/{event_key}/oprs"
     response = requests.get(url, headers=HEADERS)
-    return response.json()
+    try:
+        return response.json()
+    except Exception as e:
+        print(f"Error getting OPRs for {event_key}: {e}")
+        return {}
 
 # Get team statuses for a given event
 def get_team_statuses(event_key):
@@ -33,24 +37,27 @@ def get_team_performance_data(event_key, week, state_prov):
     oprs = get_oprs(event_key)
     team_statuses = get_team_statuses(event_key)
     team_performance_data = []
-    for team_key in team_statuses.keys():
-        opr = oprs["oprs"][team_key] if "oprs" in oprs and team_key in oprs["oprs"] else None
-        qual_ranking = team_statuses[team_key]["qual"]["ranking"]["rank"] if team_statuses[team_key]["qual"] else None
-        alliance = team_statuses[team_key]["alliance"]["number"] if team_statuses[team_key]["alliance"] else None
-        pick = team_statuses[team_key]["alliance"]["pick"] if team_statuses[team_key]["alliance"] else None
-        status = team_statuses[team_key]["playoff"]["status"] if team_statuses[team_key]["playoff"] else None
-        team_data = {
-            "event_key": event_key,
-            "team_key": team_key,
-            "opr": opr,
-            "qual_ranking": qual_ranking,
-            "alliance": alliance,
-            "pick": pick,
-            "status": status,
-            "week": week,
-            "state_prov": state_prov
-        }
-        team_performance_data.append(team_data)
+    try:
+        for team_key in team_statuses.keys():
+            opr = oprs["oprs"][team_key] if "oprs" in oprs and team_key in oprs["oprs"] else None
+            qual_ranking = team_statuses[team_key]["qual"]["ranking"]["rank"] if team_statuses[team_key]["qual"] and "ranking" in team_statuses[team_key]["qual"] and "rank" in team_statuses[team_key]["qual"]["ranking"] else None
+            alliance = team_statuses[team_key]["alliance"]["number"] if team_statuses[team_key]["alliance"] else None
+            pick = team_statuses[team_key]["alliance"]["pick"] if team_statuses[team_key]["alliance"] else None
+            status = team_statuses[team_key]["playoff"]["status"] if team_statuses[team_key]["playoff"] else None
+            team_data = {
+                "event_key": event_key,
+                "team_key": team_key,
+                "opr": opr,
+                "qual_ranking": qual_ranking,
+                "alliance": alliance,
+                "pick": pick,
+                "status": status,
+                "week": week,
+                "state_prov": state_prov
+            }
+            team_performance_data.append(team_data)
+    except Exception as e:
+        print(f"Error getting data for {event_key} {team_key}: {e}")
 
     return team_performance_data
 
