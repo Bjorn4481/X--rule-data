@@ -35,7 +35,6 @@ def get_oprs(event_key):
 
 # Get team statuses for a given event
 def get_team_statuses(event_key):
-    event_key = '2024caph'
     url = f"{BASE_URL}/event/{event_key}/teams/statuses"
     response = requests.get(url, headers=HEADERS)
     return response.json()
@@ -47,8 +46,6 @@ def get_team_performance_data(event_key, week, state_prov):
     team_performance_data = []
     try:
         for team_key in team_statuses.keys():
-            if team_key == "frc1678":
-                print("weekend")
             opr = oprs["oprs"][team_key] if "oprs" in oprs and team_key in oprs["oprs"] else None
             qual_ranking = team_statuses[team_key]["qual"]["ranking"]["rank"] if team_statuses[team_key]["qual"] and "ranking" in team_statuses[team_key]["qual"] and "rank" in team_statuses[team_key]["qual"]["ranking"] else None
             alliance = team_statuses[team_key]["alliance"]["number"] if team_statuses[team_key]["alliance"] else None
