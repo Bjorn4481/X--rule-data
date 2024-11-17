@@ -1,6 +1,13 @@
 from local_secrets import API_KEY
 import requests
 import json
+from statbotics import Statbotics as StatBotics
+
+sb = StatBotics()
+
+# load in teams_epa_data.json as teams_epa_data
+with open("teams_epa_data.json", "r") as f:
+    teams_epa_data = json.load(f)
 
 BASE_URL = "https://www.thebluealliance.com/api/v3"
 HEADERS = {
@@ -28,6 +35,7 @@ def get_oprs(event_key):
 
 # Get team statuses for a given event
 def get_team_statuses(event_key):
+    event_key = '2024caph'
     url = f"{BASE_URL}/event/{event_key}/teams/statuses"
     response = requests.get(url, headers=HEADERS)
     return response.json()
@@ -39,11 +47,29 @@ def get_team_performance_data(event_key, week, state_prov):
     team_performance_data = []
     try:
         for team_key in team_statuses.keys():
+            if team_key == "frc1678":
+                print("weekend")
             opr = oprs["oprs"][team_key] if "oprs" in oprs and team_key in oprs["oprs"] else None
             qual_ranking = team_statuses[team_key]["qual"]["ranking"]["rank"] if team_statuses[team_key]["qual"] and "ranking" in team_statuses[team_key]["qual"] and "rank" in team_statuses[team_key]["qual"]["ranking"] else None
             alliance = team_statuses[team_key]["alliance"]["number"] if team_statuses[team_key]["alliance"] else None
             pick = team_statuses[team_key]["alliance"]["pick"] if team_statuses[team_key]["alliance"] else None
-            status = team_statuses[team_key]["playoff"]["status"] if team_statuses[team_key]["playoff"] else None
+            if team_statuses[team_key]["playoff"]:
+                if  team_statuses[team_key]["playoff"]['level'] == 'f':
+                    if team_statuses[team_key]["playoff"]["status"] == "won":
+                        status = "winner"
+                    else:
+                        status = "finalist"
+                else:
+                    status = team_statuses[team_key]["playoff"]["status"]
+            else:
+                status = None
+            team_str = team_key.strip('frc')
+            year_int = int(event_key[:4])
+            last_year_str = str(year_int-1)
+            try:
+                last_year_norm_epa = teams_epa_data[team_str][last_year_str]
+            except:
+                last_year_norm_epa = None
             team_data = {
                 "event_key": event_key,
                 "team_key": team_key,
@@ -53,7 +79,8 @@ def get_team_performance_data(event_key, week, state_prov):
                 "pick": pick,
                 "status": status,
                 "week": week,
-                "state_prov": state_prov
+                "state_prov": state_prov,
+                "last_year_norm_epa": last_year_norm_epa
             }
             team_performance_data.append(team_data)
     except Exception as e:
@@ -62,6 +89,8 @@ def get_team_performance_data(event_key, week, state_prov):
     return team_performance_data
 
 def get_all_events_teams_performance_data():
+    with open("all_teams_performance_data.csv", "w", encoding='utf-8') as f:
+        f.write("event_key,team_key,opr,qual_ranking,alliance,pick,status,week,state_prov,last_year_norm_epa\n")
     with open("event_keys.json", "r") as f:
         event_keys = json.load(f)
     for event_key in event_keys:
@@ -70,14 +99,16 @@ def get_all_events_teams_performance_data():
             events_data = json.load(f)
             for event in events_data:
                 if event["key"] == event_key:
-                    if "week" in event:
-                        week = event["week"]
+                    if "week" in event and event["week"] is not None:
+                        week = event["week"] + 1
                     else:
                         week = None
                     if "state_prov" in event:
                         state_prov = event["state_prov"]
                     else:
                         state_prov = None
+        if week is None:
+            continue
         teams_performance_data = get_team_performance_data(event_key, week, state_prov)
         with open("all_teams_performance_data.csv", "a", encoding='utf-8') as f:
             for team_data in teams_performance_data:
